@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>動画のフレームキャプチャとダウンロード</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.7.1/jszip.min.js"></script>
+</head>
+<body>
+
+<h2>動画のフレームキャプチャとダウンロード</h2>
+<video id="video" width="640" height="360" controls crossorigin="anonymous">
+  <source src="your-video-file.mp4" type="video/mp4">
+  <!-- 動画のURLを指定してください -->
+</video>
+<br>
+<button onclick="captureFrames()">フレームをキャプチャしてダウンロード</button>
+
+<script>
+async function captureFrames() {
+  const video = document.getElementById("video");
+  const canvas = document.createElement("canvas");
+  const ctx = canvas.getContext("2d");
+  const zip = new JSZip();
+
+  // 動画が再生可能になるまで待機
+  await video.play();
+  video.pause();
+
+  // キャンバスのサイズを動画サイズに設定
+  canvas.width = video.videoWidth;
+  canvas.height = video.videoHeight;
+
+  let frameCount = 0;
+  const interval = 0.5; // キャプチャする間隔（秒）
+
+  // 動画全体をフレームごとにキャプチャ
+  while (video.currentTime < video.duration) {
+    video.currentTime += interval;
+
+    await new Promise(resolve => {
+      video.onseeked = () => {
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+        const dataUrl = canvas.toDataURL("image/png");
+        zip.file(`frame_${frameCount}.png`, dataUrl.split(",")[1], { base64: true });
+        frameCount++;
+        resolve();
+      };
+    });
+  }
+
+  // ZIPファイルを生成してダウンロード
+  zip.generateAsync({ type: "blob" }).then(content => {
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(content);
+    link.download = "frames.zip";
+    link.click();
+  });
+}
+</script>
+
+</body>
+</html>
