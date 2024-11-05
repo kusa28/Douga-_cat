@@ -2,21 +2,21 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
-  <title>動画のフレームキャプチャとダウンロード</title>
+  <title>全てのフレームをキャプチャしてダウンロード</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.7.1/jszip.min.js"></script>
 </head>
 <body>
 
-<h2>動画のフレームキャプチャとダウンロード</h2>
+<h2>全てのフレームをキャプチャしてダウンロード</h2>
 <video id="video" width="640" height="360" controls crossorigin="anonymous">
   <source src="IMG_1051.mp4" type="video/mp4">
   <!-- 動画のURLを指定してください -->
 </video>
 <br>
-<button onclick="captureFrames()">フレームをキャプチャしてダウンロード</button>
+<button onclick="captureAllFrames()">全てのフレームをキャプチャしてダウンロード</button>
 
 <script>
-async function captureFrames() {
+async function captureAllFrames() {
   const video = document.getElementById("video");
   const canvas = document.createElement("canvas");
   const ctx = canvas.getContext("2d");
@@ -30,18 +30,19 @@ async function captureFrames() {
   canvas.width = video.videoWidth;
   canvas.height = video.videoHeight;
 
+  const frameRate = 30; // フレームレート (例: 30fps)
+  const interval = 1 / frameRate; // フレーム間の間隔
   let frameCount = 0;
-  const interval = 0.5; // キャプチャする間隔（秒）
 
   // 動画全体をフレームごとにキャプチャ
-  while (video.currentTime < video.duration) {
-    video.currentTime += interval;
+  for (let time = 0; time < video.duration; time += interval) {
+    video.currentTime = time;
 
     await new Promise(resolve => {
       video.onseeked = () => {
         ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
         const dataUrl = canvas.toDataURL("image/png");
-        zip.file(`frame_${frameCount}.png`, dataUrl.split(",")[1], { base64: true });
+        zip.file(`frame_${String(frameCount).padStart(5, '0')}.png`, dataUrl.split(",")[1], { base64: true });
         frameCount++;
         resolve();
       };
